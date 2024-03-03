@@ -1,53 +1,111 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import server from "./server";
+import  { keccak256 } from "ethereum-cryptography/keccak";
+import  { secp256k1 } from "ethereum-cryptography/secp256k1";
+import { utf8ToBytes } from "ethereum-cryptography/utils";
 
-function Transfer({ address, setBalance }) {
+function Transfer({ senderAddress, privateKeyList, accountList, setAccountList }) {
   const [sendAmount, setSendAmount] = useState("");
-  const [recipient, setRecipient] = useState("");
+  const [recipientAddress, setRecipientAddress] = useState();
+  const [privateKey, setPrivateKey] = useState("");
+  const [privateKeyPromptVisible, setPrivateKeyPromptVisible] = useState(false);
 
   const setValue = (setter) => (evt) => setter(evt.target.value);
+
+  useEffect(() => {
+    updatePrivateKeyPromptVisibility();
+  }, [senderAddress]);
+
+  async function updatePrivateKeyPromptVisibility() {
+    if (senderAddress !== "" && !privateKeyList.hasOwnProperty(senderAddress)) {
+      alert("Private key for the sender address was not found locally, please type it manually. If you have the ownership of the account and you have not store the private key securely, your funds have been lost!");
+      setPrivateKeyPromptVisible(true);
+    } else {
+      setPrivateKeyPromptVisible(false);
+      setPrivateKey(privateKeyList[senderAddress] || "")
+    }
+  }
 
   async function transfer(evt) {
     evt.preventDefault();
 
+    // Validate sender and recipient addresses
+    if (!senderAddress || !recipientAddress) {
+      alert("Sender and recipient addresses must be selected.");
+      return;
+    }
+
+    if (senderAddress === recipientAddress) {
+      alert("Sender and recipient addresses cannot be the same.");
+      return;
+    }
+
+    // Create signature
+    const msg = senderAddress + recipientAddress + sendAmount;
+    const msgHash = keccak256(utf8ToBytes(msg));
+    const signatureHexStr = secp256k1.sign(msgHash, BigInt(privateKey)).addRecoveryBit(1).toCompactHex();
+
     try {
-      const {
-        data: { balance },
-      } = await server.post(`send`, {
-        sender: address,
+      // Send transaction to the server
+        await server.post(`send`, {
+        sender: senderAddress,
+        recipient: recipientAddress,
         amount: parseInt(sendAmount),
-        recipient,
+        signatureHexStr: signatureHexStr
       });
-      setBalance(balance);
-    } catch (ex) {
-      alert(ex.response.data.message);
+
+      // Fetch updated balances from the server
+      const {
+        data: { balances },
+      } = await server.get(`list`);
+      console.log(balances);
+      setAccountList(balances);
+    } catch (e) {
+      alert(e.response.data.message);
     }
   }
 
+  const handleAddressChange = (event) => {
+    setRecipientAddress(event.target.value);
+  };
+
   return (
-    <form className="container transfer" onSubmit={transfer}>
-      <h1>Send Transaction</h1>
+      <form className="container transfer" onSubmit={transfer}>
+        <h1>Send Transaction</h1>
 
-      <label>
-        Send Amount
-        <input
-          placeholder="1, 2, 3..."
-          value={sendAmount}
-          onChange={setValue(setSendAmount)}
-        ></input>
-      </label>
+        <label>
+          Send Amount
+          <input
+            placeholder="1, 2, 3..."
+            value={sendAmount}
+            onChange={setValue(setSendAmount)}
+          ></input>
+        </label>
 
-      <label>
-        Recipient
-        <input
-          placeholder="Type an address, for example: 0x2"
-          value={recipient}
-          onChange={setValue(setRecipient)}
-        ></input>
-      </label>
+        <div>
+          <label htmlFor="recipientDropdown">Recipent Address:</label>
+          <select id="recipientDropdown" className="dropdown recipient" value={recipientAddress} onChange={handleAddressChange}>
+            <option value="">Select a wallet address...</option>
+            {Object.keys(accountList).map((address) => (
+              <option key={address} value={address}>
+                {address}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <input type="submit" className="button" value="Transfer" />
-    </form>
+        {privateKeyPromptVisible && (
+        <label>
+          Type the private key of the sender's address:
+          <input
+            placeholder="0x..."
+            onChange={setValue(setPrivateKey)}
+          ></input>
+        </label>
+        )}
+
+        <input type="submit" className="button" value="Transfer" />
+      </form>
   );
 }
 

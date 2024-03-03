@@ -15,14 +15,24 @@ label {
 }
 
 .app {
-  display: flex;
+  //display: flex;
   max-width: 1400px;
   flex-wrap: wrap;
   gap: 12px;
   margin: 0 auto;
 }
 
+.row {
+  max-width: 1400px;
+  display: flex;
+  gap: 12px;
+  margin: 0 auto;
+}
+
 .container {
+  width: 50vw;
+  display: flex;
+  flex-direction: column;
   flex-grow: 1;
   margin: 0 20px;
   background-color: #fff;
@@ -30,6 +40,7 @@ label {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border-radius: 0.375rem;
   padding: 40px;
+  margin: 12px;
 
   label {
     margin: 10px 0;
@@ -78,9 +89,100 @@ input {
     padding: 0.75rem;
     background-color: #f4f6f8;
   }
+
+  .accountList {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 400;
+    font-size: .9em;
+    display: inline-flex;
+    margin-top: 10px;
+    padding: 0.75rem;
+    background-color: #f4f6f8;
+  }
 }
 
 .transfer {
   display: flex;
   flex-direction: column;
+}
+
+.createAddress {
+
+  .address {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 400;
+    font-size: .9em;
+    display: inline-flex;
+    margin-top: 10px;
+    padding: 0.75rem;
+    background-color: #f4f6f8;
+  }
+
+  .key {
+    letter-spacing: 1px;
+    font-weight: 400;
+    font-size: .9em;
+    display: inline-flex;
+    margin-top: 10px;
+    padding: 0.75rem;
+    background-color: #ff531f;
+
+  }
+}
+
+.addWallet {
+
+  .address {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 400;
+    font-size: .9em;
+    display: inline-flex;
+    margin-top: 10px;
+    padding: 0.75rem;
+    background-color: #f4f6f8;
+  }
+}
+
+.dropdown {
+  font-weight: 400;
+  font-size: .9em;
+  margin-bottom: 10px;
+}
+
+.sender {
+  background-color: #ff531f;
+}
+
+.recipient {
+  background-color: #0af002;
+}
+
+.walletsTable {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #ddd;
+  letter-spacing: 1px;
+  font-weight: 400;
+  font-size: .9em;
+}
+
+.walletsTable th, .walletsTable td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.walletsTable th {
+  background-color: #f2f2f2;
+  text-align: left;
+}
+
+.walletsTable tbody tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.walletsTable tbody tr:hover {
+  background-color: #ddd;
 }
