@@ -47,16 +47,15 @@ app.get("/list", (req, res) => {
   res.send({ balances });
 });
 
-
 app.post("/send", (req, res) => {
-  const { sender, recipient, amount, signatureHexStr } = req.body;
+  const { sender, recipient, amount, signatureHexStr, recovery } = req.body;
 
   // Hash message
-  const msg = sender + recipient + amount;
+  const msg = sender + recipient + toString(amount);
   const msgHash = keccak.keccak256(utils.utf8ToBytes(msg));
 
   // Recover public key
-  const signature = secp256k1.secp256k1.Signature.fromCompact(signatureHexStr).addRecoveryBit(1);
+  const signature = secp256k1.secp256k1.Signature.fromCompact(signatureHexStr).addRecoveryBit(recovery);
   const publicKey = signature.recoverPublicKey(utils.toHex(msgHash)).toRawBytes();
 
   // Compare sender address with those obtained from recovered public key
@@ -69,7 +68,6 @@ app.post("/send", (req, res) => {
   if (balances[sender] < amount) {
     return res.status(400).send({ message: "Not enough funds" });
   }
-
 
   // Update balances
   balances[sender] -= amount;

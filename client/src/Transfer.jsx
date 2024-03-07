@@ -18,7 +18,7 @@ function Transfer({ senderAddress, privateKeyList, accountList, setAccountList }
 
   async function updatePrivateKeyPromptVisibility() {
     if (senderAddress !== "" && !privateKeyList.hasOwnProperty(senderAddress)) {
-      alert("Private key for the sender address was not found locally, please type it manually. If you have the ownership of the account and you have not store the private key securely, your funds have been lost!");
+      alert("Private key for the sender address was not found locally, please type it manually. If you have the ownership of the account and you have not store the private key securely, your 'funds' have been lost!");
       setPrivateKeyPromptVisible(true);
     } else {
       setPrivateKeyPromptVisible(false);
@@ -40,10 +40,16 @@ function Transfer({ senderAddress, privateKeyList, accountList, setAccountList }
       return;
     }
 
+    if (!/^[0-9A-Fa-f]+$/.test(privateKey.slice(2))) {
+      alert("Invalid private key");
+      return;
+    }
+
     // Create signature
-    const msg = senderAddress + recipientAddress + sendAmount;
+    const msg = senderAddress + recipientAddress + toString(sendAmount);
     const msgHash = keccak256(utf8ToBytes(msg));
-    const signatureHexStr = secp256k1.sign(msgHash, BigInt(privateKey)).addRecoveryBit(1).toCompactHex();
+    const signature = secp256k1.sign(msgHash, BigInt(privateKey));
+    const signatureHexStr = signature.toCompactHex();
 
     try {
       // Send transaction to the server
@@ -51,14 +57,14 @@ function Transfer({ senderAddress, privateKeyList, accountList, setAccountList }
         sender: senderAddress,
         recipient: recipientAddress,
         amount: parseInt(sendAmount),
-        signatureHexStr: signatureHexStr
+        signatureHexStr: signatureHexStr,
+        recovery: signature.recovery
       });
 
       // Fetch updated balances from the server
       const {
         data: { balances },
       } = await server.get(`list`);
-      console.log(balances);
       setAccountList(balances);
     } catch (e) {
       alert(e.response.data.message);
